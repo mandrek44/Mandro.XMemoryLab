@@ -3,38 +3,20 @@ using Xamarin.Forms;
 
 namespace Mandro.XMemoryLab
 {
-    public static class TestContent
+    public class App : Application
     {
-        private const int MaxCount = 5;
+        public static INavigation Navigation { get; set; }
 
-        public static View Create(int count, Func<Page> nextPageFactory )
+        protected override void OnStart()
         {
-            var actionButton = new Button() { BackgroundColor = Color.Green };
-            if (count >= MaxCount)
-            {
-                actionButton.Text = "Return to root";
-                actionButton.Clicked += (sender, args) => App.Navigation.PopToRootAsync();
-            }
-            else
-            {
-                actionButton.Text = "Next " + (MaxCount - count);
-                actionButton.Clicked += (sender, args) => App.Navigation.PushAsync(nextPageFactory());
-            }
+            base.OnStart();
 
-            return new StackLayout
-            {
-                VerticalOptions = LayoutOptions.Center,
-                Children =
-                {
-                    new Image() { Source = ImageSource.FromFile("xamarin.png")},
-                    new Label
-                    {
-                        XAlign = TextAlignment.Center,
-                        Text = "Welcome to Xamarin Forms!"
-                    },
-                    actionButton
-                }
-            };
+            // MEMORY LEAK: Switch following two lines to observe massive memory leak
+            //var navigationPage = new NavigationPage(new OutOfMemoryExceptionPage(1));
+            var navigationPage = new NavigationPage(new MemorySafePage(1));
+
+            Navigation = navigationPage.Navigation;
+            MainPage = navigationPage;
         }
     }
 
@@ -68,20 +50,38 @@ namespace Mandro.XMemoryLab
         }
     }
 
-    public class App : Application
+    public static class TestContent
     {
-        public static INavigation Navigation { get; set; }
+        private const int MaxCount = 5;
 
-        protected override void OnStart()
+        public static View Create(int count, Func<Page> nextPageFactory)
         {
-            base.OnStart();
-            
-            // MEMORY LEAK: Switch following two lines to observe massive memory leak
-            //var navigationPage = new NavigationPage(new OutOfMemoryExceptionPage(1));
-            var navigationPage = new NavigationPage(new MemorySafePage(1));
+            var actionButton = new Button() { BackgroundColor = Color.Green };
+            if (count >= MaxCount)
+            {
+                actionButton.Text = "Return to root";
+                actionButton.Clicked += (sender, args) => App.Navigation.PopToRootAsync();
+            }
+            else
+            {
+                actionButton.Text = "Next " + (MaxCount - count);
+                actionButton.Clicked += (sender, args) => App.Navigation.PushAsync(nextPageFactory());
+            }
 
-            Navigation = navigationPage.Navigation;
-            MainPage = navigationPage;
+            return new StackLayout
+            {
+                VerticalOptions = LayoutOptions.Center,
+                Children =
+                {
+                    new Image() { Source = ImageSource.FromFile("xamarin.png")},
+                    new Label
+                    {
+                        XAlign = TextAlignment.Center,
+                        Text = "Welcome to Xamarin Forms!"
+                    },
+                    actionButton
+                }
+            };
         }
     }
 }
